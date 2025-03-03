@@ -32,13 +32,20 @@
 						:rules="[rules.required, rules.minLength(6)]"
 						required
 					></v-text-field>
+					<v-text-field
+						v-model="confirmPassword"
+						:append-inner-icon="showPassword ? 'mdi-eye' : 'mdi-eye-off'"
+						@click:append-inner="togglePasswordVisibility"
+						label="Confirm password"
+						:type="showPassword ? 'password' : 'text'"
+						:rules="[rules.required, rules.minLength(6)]"
+						required
+					></v-text-field>
 
-					<v-btn type="submit" color="primary" block class="mt-4">Login</v-btn>
+					<v-btn type="submit" color="primary" block class="mt-4">Submit</v-btn>
 				</v-form>
 
-				<v-btn @click="goToRegister" color="secondary" block class="mt-4">
-					Registration
-				</v-btn>
+				<v-btn @click="goToLogin" color="secondary" block class="mt-4"> Login </v-btn>
 			</v-card-text>
 		</v-card>
 	</v-container>
@@ -52,6 +59,7 @@
 	const username = ref<string>("");
 	const email = ref<string>("");
 	const password = ref<string>("");
+	const confirmPassword = ref<string>("");
 	const showPassword = ref<boolean>(false);
 	const router = useRouter();
 
@@ -72,8 +80,8 @@
 		);
 	};
 
-	const goToRegister = (): void => {
-		router.push("/register");
+	const goToLogin = (): void => {
+		router.push("/");
 	};
 
 	const rules = {
