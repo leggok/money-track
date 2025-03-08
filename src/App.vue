@@ -4,10 +4,20 @@
 	</header>
 
 	<RouterView />
+	<v-snackbar
+		v-model="message.show"
+		:color="message.color"
+		timeout="3000"
+		location="top"
+		:absolute="true"
+	>
+		{{ message.text }}
+	</v-snackbar>
 </template>
 
 <script setup lang="ts">
 	import { RouterView } from "vue-router";
+	import { message } from "@/utils/message";
 </script>
 
 <style scoped>

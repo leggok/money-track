@@ -5,8 +5,14 @@
 			<v-card-text>
 				<v-form @submit.prevent="sendDataForRegister" ref="form" lazy-validation>
 					<v-text-field
-						v-model="fullName"
-						label="Full Name"
+						v-model="firstName"
+						label="First Name"
+						:rules="[rules.required]"
+						required
+					></v-text-field>
+					<v-text-field
+						v-model="lastName"
+						label="Last Name"
 						:rules="[rules.required]"
 						required
 					></v-text-field>
@@ -54,8 +60,13 @@
 <script setup lang="ts">
 	import { ref } from "vue";
 	import { useRouter } from "vue-router";
+	import { AuthService } from "@/services/api";
+	import type { Auth } from "@/interfaces/index";
+	import { showMessage } from "@/utils/message";
+	import axios from "axios";
 
-	const fullName = ref<string>("");
+	const firstName = ref<string>("");
+	const lastName = ref<string>("");
 	const username = ref<string>("");
 	const email = ref<string>("");
 	const password = ref<string>("");
@@ -67,17 +78,35 @@
 		showPassword.value = !showPassword.value;
 	};
 
-	const sendDataForRegister = (): void => {
-		console.log(
-			"Email:",
-			email.value,
-			"Password:",
-			password.value,
-			"fullName:",
-			fullName.value,
-			"username:",
-			username.value
-		);
+	const sendDataForRegister = async (): Promise<void> => {
+		try {
+			const authData: Auth = {
+				firstName: firstName.value,
+				lastName: lastName.value,
+				username: username.value,
+				email: email.value,
+				password: password.value
+			};
+
+			console.log("authData", authData);
+
+			// Очікуємо, що `AuthService.registration` поверне відповідь певного типу
+			const response = await AuthService.registration(authData);
+
+			console.log("response", response);
+
+			if (response.data.success) {
+				showMessage("Registration successful!", "success");
+			} else {
+				showMessage(response.data.message, "error");
+			}
+		} catch (error: unknown) {
+			if (axios.isAxiosError(error)) {
+				showMessage(error.response?.data.message, "error");
+			} else {
+				showMessage("An unexpected error occurred", "error");
+			}
+		}
 	};
 
 	const goToLogin = (): void => {
