@@ -1,3 +1,3 @@
-import type { Auth } from "@/interfaces/auth";
+import type { Registration, Login } from "@/interfaces/auth";
 
-export type { Auth };
+export type { Registration, Login };

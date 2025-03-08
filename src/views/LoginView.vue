@@ -5,8 +5,8 @@
 			<v-card-text>
 				<v-form @submit.prevent="sendDataForLogin" ref="form" lazy-validation>
 					<v-text-field
-						v-model="login"
-						label="Login or email"
+						v-model="email"
+						label="Email"
 						:rules="[rules.required]"
 						required
 					></v-text-field>
@@ -34,9 +34,13 @@
 
 <script setup lang="ts">
 	import { ref } from "vue";
+	import axios from "axios";
 	import { useRouter } from "vue-router";
+	import type { Login } from "@/interfaces/index";
+	import { AuthService } from "@/services/api";
+	import { showMessage } from "@/utils/message";
 
-	const login = ref<string>("");
+	const email = ref<string>("");
 	const password = ref<string>("");
 	const showPassword = ref<boolean>(false);
 	const router = useRouter();
@@ -45,8 +49,27 @@
 		showPassword.value = !showPassword.value;
 	};
 
-	const sendDataForLogin = (): void => {
-		console.log("Login:", login.value, "Password:", password.value);
+	const sendDataForLogin = async (): Promise<void> => {
+		try {
+			const authData: Login = {
+				email: email.value,
+				password: password.value
+			};
+
+			const response = await AuthService.login(authData);
+
+			if (response.data.success) {
+				showMessage("Login successful!", "success");
+			} else {
+				showMessage(response.data.message, "error");
+			}
+		} catch (error: unknown) {
+			if (axios.isAxiosError(error)) {
+				showMessage(error.response?.data.message, "error");
+			} else {
+				showMessage("An unexpected error occurred", "error");
+			}
+		}
 	};
 
 	const goToRegister = (): void => {

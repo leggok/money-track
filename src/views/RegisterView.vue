@@ -61,7 +61,7 @@
 	import { ref } from "vue";
 	import { useRouter } from "vue-router";
 	import { AuthService } from "@/services/api";
-	import type { Auth } from "@/interfaces/index";
+	import type { Registration } from "@/interfaces/index";
 	import { showMessage } from "@/utils/message";
 	import axios from "axios";
 
@@ -80,7 +80,7 @@
 
 	const sendDataForRegister = async (): Promise<void> => {
 		try {
-			const authData: Auth = {
+			const authData: Registration = {
 				firstName: firstName.value,
 				lastName: lastName.value,
 				username: username.value,
@@ -88,12 +88,7 @@
 				password: password.value
 			};
 
-			console.log("authData", authData);
-
-			// Очікуємо, що `AuthService.registration` поверне відповідь певного типу
 			const response = await AuthService.registration(authData);
-
-			console.log("response", response);
 
 			if (response.data.success) {
 				showMessage("Registration successful!", "success");
