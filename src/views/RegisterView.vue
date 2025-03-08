@@ -10,12 +10,7 @@
 						:rules="[rules.required]"
 						required
 					></v-text-field>
-					<v-text-field
-						v-model="lastName"
-						label="Last Name"
-						:rules="[rules.required]"
-						required
-					></v-text-field>
+					<v-text-field v-model="lastName" label="Last Name"></v-text-field>
 					<v-text-field
 						v-model="username"
 						label="Username"
@@ -25,7 +20,8 @@
 					<v-text-field
 						v-model="email"
 						label="Email"
-						:rules="[rules.required]"
+						type="email"
+						:rules="[rules.required, rules.email]"
 						required
 					></v-text-field>
 
@@ -48,7 +44,14 @@
 						required
 					></v-text-field>
 
-					<v-btn type="submit" color="primary" block class="mt-4">Submit</v-btn>
+					<v-btn
+						:disabled="disableSubmit"
+						type="submit"
+						color="primary"
+						block
+						class="mt-4"
+						>Submit</v-btn
+					>
 				</v-form>
 
 				<v-btn @click="goToLogin" color="secondary" block class="mt-4"> Login </v-btn>
@@ -58,12 +61,13 @@
 </template>
 
 <script setup lang="ts">
-	import { ref } from "vue";
+	import { ref, watchEffect } from "vue";
 	import { useRouter } from "vue-router";
 	import { AuthService } from "@/services/api";
 	import type { Registration } from "@/interfaces/index";
 	import { showMessage } from "@/utils/message";
 	import axios from "axios";
+	import { testEmail } from "@/utils/validation";
 
 	const firstName = ref<string>("");
 	const lastName = ref<string>("");
@@ -72,7 +76,9 @@
 	const password = ref<string>("");
 	const confirmPassword = ref<string>("");
 	const showPassword = ref<boolean>(false);
+	const disableSubmit = ref<boolean>(false);
 	const router = useRouter();
+	const form = ref();
 
 	const togglePasswordVisibility = (): void => {
 		showPassword.value = !showPassword.value;
@@ -108,9 +114,23 @@
 		router.push("/");
 	};
 
+	watchEffect(async () => {
+		if (
+			password.value !== confirmPassword.value ||
+			!testEmail(email.value) ||
+			firstName.value.length === 0 ||
+			username.value.length === 0
+		) {
+			disableSubmit.value = true;
+		} else {
+			disableSubmit.value = false;
+		}
+	});
+
 	const rules = {
 		required: (value: string) => !!value || "This field is required",
 		minLength: (length: number) => (value: string) =>
-			(value && value.length >= length) || `Minimum length is ${length} characters`
+			(value && value.length >= length) || `Minimum length is ${length} characters`,
+		email: (value: string) => testEmail(value) || "Please enter a valid email address"
 	};
 </script>

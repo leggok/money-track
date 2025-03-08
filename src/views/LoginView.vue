@@ -7,7 +7,7 @@
 					<v-text-field
 						v-model="email"
 						label="Email"
-						:rules="[rules.required]"
+						:rules="[rules.required, rules.email]"
 						required
 					></v-text-field>
 
@@ -21,7 +21,14 @@
 						required
 					></v-text-field>
 
-					<v-btn type="submit" color="primary" block class="mt-4">Login</v-btn>
+					<v-btn
+						type="submit"
+						color="primary"
+						block
+						class="mt-4"
+						:disabled="disableSubmit"
+						>Login</v-btn
+					>
 				</v-form>
 
 				<v-btn @click="goToRegister" color="secondary" block class="mt-4">
@@ -33,17 +40,19 @@
 </template>
 
 <script setup lang="ts">
-	import { ref } from "vue";
+	import { ref, watchEffect } from "vue";
 	import axios from "axios";
 	import { useRouter } from "vue-router";
 	import type { Login } from "@/interfaces/index";
 	import { AuthService } from "@/services/api";
 	import { showMessage } from "@/utils/message";
+	import { testEmail } from "@/utils/validation";
 
 	const email = ref<string>("");
 	const password = ref<string>("");
 	const showPassword = ref<boolean>(false);
 	const router = useRouter();
+	const disableSubmit = ref<boolean>(false);
 
 	const togglePasswordVisibility = (): void => {
 		showPassword.value = !showPassword.value;
@@ -76,9 +85,18 @@
 		router.push({ name: "Register" });
 	};
 
+	watchEffect(async () => {
+		if (!testEmail(email.value) || password.value.length === 0) {
+			disableSubmit.value = true;
+		} else {
+			disableSubmit.value = false;
+		}
+	});
+
 	const rules = {
 		required: (value: string) => !!value || "This field is required",
 		minLength: (length: number) => (value: string) =>
-			(value && value.length >= length) || `Minimum length is ${length} characters`
+			(value && value.length >= length) || `Minimum length is ${length} characters`,
+		email: (value: string) => testEmail(value) || "Please enter a valid email address"
 	};
 </script>
