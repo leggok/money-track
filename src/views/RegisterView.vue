@@ -98,6 +98,7 @@
 
 			if (response.data.success) {
 				showMessage("Registration successful!", "success");
+				goToLogin();
 			} else {
 				showMessage(response.data.message, "error");
 			}
@@ -111,7 +112,7 @@
 	};
 
 	const goToLogin = (): void => {
-		router.push("/");
+		router.push({ name: "Login" });
 	};
 
 	watchEffect(async () => {
