@@ -5,28 +5,28 @@
 				<v-card-title class="headline">Створити категорію</v-card-title>
 
 				<v-card-text>
-					<!-- Форма для створення категорії -->
 					<v-form v-model="valid">
 						<v-text-field
-							v-model="name"
+							v-model="title"
 							label="Назва категорії"
 							:rules="[(v) => !!v || 'Назва категорії обов\'язкова']"
 							required
 						></v-text-field>
 
-						<v-textarea
-							v-model="description"
-							label="Опис"
-							rows="3"
-							:rules="[
-								(v) => v.length <= 500 || 'Опис не може бути більше 500 символів'
-							]"
-						></v-textarea>
+						<v-file-input
+							@change="handleFileUpload"
+							accept="image/*"
+							label="Завантажити іконку"
+						></v-file-input>
+
+						<v-color-picker v-model="color" hide-inputs></v-color-picker>
 					</v-form>
+
+					<!-- Попередній перегляд іконки -->
+					<v-img v-if="previewIcon" :src="previewIcon" max-height="100" contain></v-img>
 				</v-card-text>
 
 				<v-card-actions>
-					<!-- Кнопки для підтвердження або скасування -->
 					<v-btn @click="closeDialog">Скасувати</v-btn>
 					<v-btn color="primary" @click="createCategory" :disabled="!valid">
 						Створити
@@ -39,6 +39,7 @@
 
 <script setup lang="ts">
 	import { ref, watch } from "vue";
+	import { CategoriesService } from "@/services/api";
 
 	const props = defineProps({
 		show: Boolean
@@ -46,21 +47,38 @@
 
 	const dialog = ref(props.show);
 	const valid = ref(false);
-	const name = ref("");
-	const description = ref("");
+	const title = ref("");
+	const color = ref("");
+	const icon = ref<File | null>(null);
+	const previewIcon = ref<string | null>(null);
 
 	const emit = defineEmits(["close"]);
 
-	const createCategory = () => {
-		if (valid.value) {
-			console.log("Створена нова категорія:", { name, description });
+	// Обробка вибору файлу
+	const handleFileUpload = (event: Event) => {
+		const fileInput = event.target as HTMLInputElement;
+		if (fileInput.files && fileInput.files[0]) {
+			icon.value = fileInput.files[0];
 
-			dialog.value = false;
+			const reader = new FileReader();
+			reader.onload = () => {
+				previewIcon.value = reader.result as string;
+			};
+			reader.readAsDataURL(icon.value);
+		}
+	};
 
-			name.value = "";
-			description.value = "";
-
-			emit("close");
+	// Відправка категорії на сервер
+	const createCategory = async () => {
+		try {
+			const response = await CategoriesService.create({
+				title: title.value,
+				color: color.value,
+				icon: icon.value // може бути File або string
+			});
+			console.log("Категорія створена:", response.data);
+		} catch (error) {
+			console.error("Помилка при створенні категорії", error);
 		}
 	};
 
