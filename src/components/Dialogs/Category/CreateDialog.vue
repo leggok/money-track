@@ -39,7 +39,8 @@
 
 <script setup lang="ts">
 	import { ref, watch } from "vue";
-	import { CategoriesService } from "@/services/api";
+	import { CategoriesService, UploadsService } from "@/services/api";
+	import { prepareFileForUpload } from "@/utils/uploadsHelpers";
 
 	const props = defineProps({
 		show: Boolean
@@ -54,7 +55,6 @@
 
 	const emit = defineEmits(["close"]);
 
-	// Обробка вибору файлу
 	const handleFileUpload = (event: Event) => {
 		const fileInput = event.target as HTMLInputElement;
 		if (fileInput.files && fileInput.files[0]) {
@@ -68,14 +68,26 @@
 		}
 	};
 
-	// Відправка категорії на сервер
 	const createCategory = async () => {
 		try {
+			let fileUrl = null;
+			if (icon.value) {
+				const { base64, filename, extension } = await prepareFileForUpload(icon.value);
+
+				fileUrl = await UploadsService.upload({
+					base64,
+					filename,
+					extension,
+					folder: "categories"
+				});
+			}
+			// TODO: Add removing file if category creation failed
 			const response = await CategoriesService.create({
 				title: title.value,
 				color: color.value,
-				icon: icon.value // може бути File або string
+				icon: fileUrl ? fileUrl.data.file.url : ""
 			});
+
 			console.log("Категорія створена:", response.data);
 		} catch (error) {
 			console.error("Помилка при створенні категорії", error);
