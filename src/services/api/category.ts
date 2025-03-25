@@ -3,6 +3,10 @@ import type { Category } from "@/interfaces/index";
 
 export default class CategoriesService {
 	static create(category: Category) {
-		return axiosApiInstance.post("/category", category);
+		return axiosApiInstance.post("/categories", category);
+	}
+
+	static getAll() {
+		return axiosApiInstance.get("/categories");
 	}
 }

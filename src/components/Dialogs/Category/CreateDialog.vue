@@ -81,7 +81,7 @@
 					folder: "categories"
 				});
 			}
-			// TODO: Add removing file if category creation failed
+
 			const response = await CategoriesService.create({
 				title: title.value,
 				color: color.value,

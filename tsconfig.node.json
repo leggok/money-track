@@ -12,8 +12,9 @@
         "noEmit": true,
         "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
 
-        "module": "ESNext",
-        "moduleResolution": "Bundler",
+        "module": "NodeNext", // або "CommonJS"
+        "moduleResolution": "NodeNext",
+        "allowSyntheticDefaultImports": true,
         "types": ["node"]
     }
 }

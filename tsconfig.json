@@ -12,9 +12,11 @@
         }
     ],
     "compilerOptions": {
-        "baseUrl": ".", // визначає корінь для імпортів
+        "baseUrl": ".",
         "paths": {
-            "@/*": ["src/*"] // визначає шлях для псевдоніма @, де src — це ваша основна папка проекту
-        }
+            "@/*": ["src/*"]
+        },
+        "moduleResolution": "Node",
+        "allowSyntheticDefaultImports": true
     }
 }
