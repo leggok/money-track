@@ -20,16 +20,20 @@
 </template>
 
 <script setup lang="ts">
-	import { ref } from "vue";
+	import { reactive, ref, onMounted } from "vue";
 	import BalanceCard from "@/components/BalanceCard.vue";
 	import IncomeExpenseChart from "@/components/IncomeExpenseChart.vue";
 	import RecentTransactions from "@/components/RecentTransactions.vue";
 	import CategoryChart from "@/components/CategoryChart.vue";
+	import { TransactionsService } from "@/services/api";
+	import type { Transaction } from "@/interfaces";
 
 	const totalBalance = ref(12500);
-	const transactions = ref([
-		{ id: 1, type: "income", amount: 2500, category: "Salary", date: "2025-03-20" },
-		{ id: 2, type: "expense", amount: 150, category: "Food", date: "2025-03-21" },
-		{ id: 3, type: "expense", amount: 300, category: "Transport", date: "2025-03-22" }
-	]);
+	const transactions = reactive(<Transaction[]>[]);
+
+	onMounted(async () => {
+		const { data } = await TransactionsService.getAll();
+
+		transactions.splice(0, transactions.length, ...data.transactions);
+	});
 </script>

@@ -41,7 +41,7 @@
 	import { Chart, registerables } from "chart.js";
 	import { CategoriesService } from "@/services/api";
 	import CreateDialog from "@/components/Dialogs/Category/CreateDialog.vue";
-	import type { Category } from "@/interfaces";
+	import type { Category, Transaction } from "@/interfaces";
 
 	const openCreateCategoryDialog = ref(false);
 
@@ -54,7 +54,7 @@
 	}
 
 	const props = defineProps<{
-		transactions: { type: string; amount: number; category: string }[];
+		transactions: Transaction[];
 	}>();
 
 	const chartData = computed(() => {

@@ -1,9 +1,10 @@
 <script setup lang="ts">
 	import { computed } from "vue";
 	import { Chart, registerables } from "chart.js";
+	import type { Transaction } from "@/interfaces";
 	Chart.register(...registerables);
 
-	const props = defineProps<{ transactions: { type: string; amount: number }[] }>();
+	const props = defineProps<{ transactions: Transaction[] }>();
 
 	const chartData = computed(() => {
 		const income = props.transactions
