@@ -1,50 +1,73 @@
 <template>
-	<v-card class="pa-4">
-		<div class="flex-wrapper">
-			<v-card-title>Витрати за категоріями</v-card-title>
-			<v-btn @click="openPopup" class="category-btn" width="36" height="36">+</v-btn>
+	<v-card class="category-chart pa-6 rounded-lg" elevation="2">
+		<div class="d-flex justify-space-between align-center mb-4">
+			<v-card-title class="text-h6 font-weight-bold pa-0">Expenses by Category</v-card-title>
+			<v-btn
+				@click="openPopup"
+				icon="mdi-plus"
+				variant="tonal"
+				color="primary"
+				size="small"
+				class="add-category-btn"
+			></v-btn>
 		</div>
 
-		<v-card-text>
-			<canvas id="categoryChart"></canvas>
+		<v-card-text class="pa-0">
+			<div class="chart-container">
+				<canvas id="categoryChart"></canvas>
+			</div>
 		</v-card-text>
 
-		<div class="categories_wrapper">
-			<div
-				class="category"
+		<v-divider class="my-6"></v-divider>
+
+		<div class="categories-grid">
+			<v-card
 				v-for="category in categories"
 				:key="category.id"
-				:style="{ backgroundColor: category.color }"
+				class="category-card rounded-lg"
+				:style="{ borderLeft: `4px solid ${category.color}` }"
 			>
-				<v-avatar
-					v-if="category.icon"
-					size="40"
-					:style="{ backgroundColor: category.color }"
-				>
-					<v-img
-						:src="typeof category.icon === 'string' ? category.icon : ''"
-						alt="icon"
-					/>
-				</v-avatar>
-				<div class="category-content">
-					<h3>{{ category.title }}</h3>
-				</div>
-			</div>
+				<v-card-text class="pa-4">
+					<div class="d-flex align-center">
+						<v-avatar
+							v-if="category.icon"
+							size="40"
+							:color="category.color"
+							class="elevation-1 mr-4"
+						>
+							<v-img
+								:src="typeof category.icon === 'string' ? category.icon : ''"
+								alt="category icon"
+							/>
+						</v-avatar>
+						<div class="category-info">
+							<h3 class="text-body-1 font-weight-medium mb-1">
+								{{ category.title }}
+							</h3>
+							<div class="text-caption text-medium-emphasis">
+								{{ getCategoryTotal(category.id ?? 0) }} ₴
+							</div>
+						</div>
+					</div>
+				</v-card-text>
+			</v-card>
 		</div>
 
-		<CreateDialog :show="openCreateCategoryDialog" @close="openCreateCategoryDialog = false" />
+		<CreateCategory
+			:show="openCreateCategoryDialog"
+			@close="openCreateCategoryDialog = false"
+		/>
 	</v-card>
 </template>
 
 <script setup lang="ts">
-	import { ref, reactive, computed, onMounted } from "vue";
+	import { ref, reactive, onMounted, watch } from "vue";
 	import { Chart, registerables } from "chart.js";
 	import { CategoriesService } from "@/services/api";
-	import CreateDialog from "@/components/Dialogs/Category/CreateDialog.vue";
+	import CreateCategory from "@/components/Dialogs/Category/CreateCategory.vue";
 	import type { Category, Transaction } from "@/interfaces";
 
 	const openCreateCategoryDialog = ref(false);
-
 	const categories = reactive<Category[]>([]);
 
 	Chart.register(...registerables);
@@ -57,134 +80,121 @@
 		transactions: Transaction[];
 	}>();
 
-	const chartData = computed(() => {
-		const expenses = props.transactions.filter((t) => t.type === "expense");
-		const categories = [...new Set(expenses.map((e) => e.category))];
-		const data = categories.map((cat) =>
-			expenses.filter((e) => e.category === cat).reduce((sum, e) => sum + e.amount, 0)
-		);
-
-		return {
-			labels: categories,
-			datasets: [{ data, backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56"] }]
-		};
-	});
-	console.log("chartData", chartData);
+	function getCategoryTotal(categoryId: number): number {
+		return props.transactions
+			.filter((t) => t.type === "expense" && t.category_id === categoryId)
+			.reduce((sum, t) => sum + t.value, 0);
+	}
 
 	onMounted(async () => {
 		const { data } = await CategoriesService.getAll();
-		console.log("Categories", data);
 		categories.splice(0, categories.length, ...data.categories);
+		initializeChart();
+	});
 
+	function initializeChart() {
 		const ctx = document.getElementById("categoryChart") as HTMLCanvasElement;
+		if (!ctx) return;
+
+		const categoryTotals = categories.map((cat) => getCategoryTotal(cat.id ?? 0));
+		const total = categoryTotals.reduce((a, b) => a + b, 0);
+
+		// Destroy existing chart if it exists
+		const existingChart = Chart.getChart(ctx);
+		if (existingChart) {
+			existingChart.destroy();
+		}
 
 		new Chart(ctx, {
-			type: "pie",
+			type: "doughnut",
 			data: {
 				labels: categories.map((category) => category.title),
 				datasets: [
 					{
-						label: "Витрати",
-						data: [100, 200, 300],
+						label: "Expenses",
+						data: categoryTotals,
 						backgroundColor: categories.map((category) => category.color),
-						hoverOffset: 4
+						borderWidth: 0,
+						hoverOffset: 8
 					}
 				]
 			},
 			options: {
 				responsive: true,
+				maintainAspectRatio: false,
 				plugins: {
 					legend: {
-						position: "top"
+						display: false
 					},
 					tooltip: {
 						callbacks: {
-							label: function (tooltipItem) {
-								return `${tooltipItem.label}: ${tooltipItem.raw} грн`; // Форматування тултипу
+							label: function (context) {
+								const value = context.raw as number;
+								const percentage =
+									total > 0 ? ((value / total) * 100).toFixed(1) : "0";
+								return `${context.label}: ${value} ₴ (${percentage}%)`;
 							}
 						}
 					}
-				}
+				},
+				cutout: "70%"
 			}
 		});
-	});
+	}
+
+	// Watch for changes in transactions to update the chart
+	watch(
+		() => props.transactions,
+		() => {
+			initializeChart();
+		},
+		{ deep: true }
+	);
 </script>
 
 <style scoped lang="scss">
-	.v-card {
-		background-color: #f7f7f7;
-		border-radius: 10px;
+	.category-chart {
+		background: #fff;
 	}
 
-	.category-btn {
-		background-color: #4caf50;
-		color: white;
-		font-size: 18px;
-		border-radius: 50%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		margin-left: auto;
-		&:hover {
-			background-color: #45a049;
-		}
-	}
-
-	.v-card-title {
-		font-size: 22px;
-		font-weight: 500;
-		color: #333;
-	}
-
-	.categories_wrapper {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-		gap: 15px;
-		margin-top: 20px;
-	}
-
-	.category {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 15px;
-		background-color: #ffffff;
-		border-radius: 8px;
-		box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-		transition: all 0.3s ease;
-		&:hover {
-			transform: translateY(-5px);
-			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-		}
-		h3 {
-			font-size: 18px;
-			color: #333;
-			margin: 0;
-			font-weight: 500;
-		}
-	}
-
-	.category-content {
-		flex: 1;
-		margin-left: 15px;
-	}
-
-	.v-avatar {
-		width: 40px;
-		height: 40px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		img {
-			width: 100%;
-			height: 100%;
-			object-fit: cover;
-		}
-	}
-
-	#categoryChart {
-		width: 100%;
+	.chart-container {
+		position: relative;
 		height: 300px;
-		margin-top: 20px;
+		margin: 0 auto;
+	}
+
+	.categories-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+		gap: 16px;
+	}
+
+	.category-card {
+		background: rgba(var(--v-theme-surface-variant), 0.5);
+		transition: transform 0.2s ease-in-out;
+
+		&:hover {
+			transform: translateY(-2px);
+		}
+	}
+
+	.add-category-btn {
+		transition: transform 0.2s ease-in-out;
+
+		&:hover {
+			transform: scale(1.1);
+		}
+	}
+
+	.category-info {
+		flex: 1;
+	}
+
+	:deep(.v-card-title) {
+		line-height: 1.2;
+	}
+
+	:deep(.v-card-text) {
+		line-height: 1.2;
 	}
 </style>

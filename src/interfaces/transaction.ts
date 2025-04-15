@@ -5,5 +5,5 @@ export interface Transaction {
 	category_id: number;
 	currency_id: number;
 	type: "expense" | "income";
-	timestamp?: string;
+	timestamp: string;
 }
