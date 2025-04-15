@@ -5,12 +5,12 @@
 			<v-card-text>
 				<v-form @submit.prevent="sendDataForRegister" ref="form" lazy-validation>
 					<v-text-field
-						v-model="firstName"
+						v-model="first_name"
 						label="First Name"
 						:rules="[rules.required]"
 						required
 					></v-text-field>
-					<v-text-field v-model="lastName" label="Last Name"></v-text-field>
+					<v-text-field v-model="last_name" label="Last Name"></v-text-field>
 					<v-text-field
 						v-model="username"
 						label="Username"
@@ -69,8 +69,8 @@
 	import axios from "axios";
 	import { testEmail } from "@/utils/validation";
 
-	const firstName = ref<string>("");
-	const lastName = ref<string>("");
+	const first_name = ref<string>("");
+	const last_name = ref<string>("");
 	const username = ref<string>("");
 	const email = ref<string>("");
 	const password = ref<string>("");
@@ -87,8 +87,8 @@
 	const sendDataForRegister = async (): Promise<void> => {
 		try {
 			const authData: Registration = {
-				firstName: firstName.value,
-				lastName: lastName.value,
+				first_name: first_name.value,
+				last_name: last_name.value,
 				username: username.value,
 				email: email.value,
 				password: password.value
@@ -119,7 +119,7 @@
 		if (
 			password.value !== confirmPassword.value ||
 			!testEmail(email.value) ||
-			firstName.value.length === 0 ||
+			first_name.value.length === 0 ||
 			username.value.length === 0
 		) {
 			disableSubmit.value = true;

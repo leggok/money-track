@@ -70,10 +70,13 @@
 	import { ref, watch, reactive, onMounted } from "vue";
 	import { TransactionsService, CategoriesService, CurrenciesService } from "@/services/api";
 	import type { Transaction, Category, Currency } from "@/interfaces";
+	import { useUserStore } from "@/stores/user";
 
 	const props = defineProps({
 		show: Boolean
 	});
+
+	const userStore = useUserStore();
 
 	const dialog = ref(props.show);
 	const valid = ref(false);
@@ -82,7 +85,8 @@
 		value: 0,
 		currency_id: 0,
 		category_id: 0,
-		type: "expense"
+		type: "expense",
+		user_id: userStore.user.id
 	});
 
 	const categories = ref<Category[]>([]);
