@@ -6,7 +6,7 @@ export default class TransactionsService {
 		return axiosApiInstance.post("/transactions", transaction);
 	}
 
-	static getAll() {
-		return axiosApiInstance.get("/transactions");
+	static getAll(userId: number) {
+		return axiosApiInstance.get(`/transactions?user_id=${userId}`);
 	}
 }

@@ -27,13 +27,20 @@
 	import CategoryChart from "@/components/CategoryChart.vue";
 	import { TransactionsService } from "@/services/api";
 	import type { Transaction } from "@/interfaces";
+	import { useUserStore } from "@/stores/user";
+
+	const userStore = useUserStore();
 
 	const totalBalance = ref(12500);
 	const transactions = reactive(<Transaction[]>[]);
 
-	onMounted(async () => {
-		const { data } = await TransactionsService.getAll();
+	async function getTransactions() {
+		const { data } = await TransactionsService.getAll(userStore.user.id ?? 0);
 
 		transactions.splice(0, transactions.length, ...data.transactions);
+	}
+
+	onMounted(() => {
+		getTransactions();
 	});
 </script>
