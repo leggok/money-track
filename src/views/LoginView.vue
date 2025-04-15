@@ -47,6 +47,9 @@
 	import { AuthService } from "@/services/api";
 	import { showMessage } from "@/utils/message";
 	import { testEmail } from "@/utils/validation";
+	import { useUserStore } from "@/stores/user";
+
+	const userStore = useUserStore();
 
 	const email = ref<string>("");
 	const password = ref<string>("");
@@ -66,6 +69,8 @@
 			};
 
 			const response = await AuthService.login(authData);
+
+			userStore.setUser(response.data.user);
 
 			if (response.data.success) {
 				showMessage("Login successful!", "success");
