@@ -81,14 +81,25 @@
 	}>();
 
 	function getCategoryTotal(categoryId: number): number {
-		return props.transactions
-			.filter((t) => t.type === "expense" && t.category_id === categoryId)
-			.reduce((sum, t) => sum + t.value, 0);
+		if (categoryId) {
+			return props.transactions
+				.filter((t) => t.type === "expense" && t.category_id === categoryId)
+				.reduce((sum, t) => {
+					const rate = t.currency?.rate || 1;
+					return sum + t.value * rate;
+				}, 0);
+		} else {
+			return 0;
+		}
 	}
 
 	onMounted(async () => {
 		const { data } = await CategoriesService.getAll();
-		categories.splice(0, categories.length, ...data.categories);
+		const filteredCategories = data.categories.filter(
+			(category: Category) => getCategoryTotal(category.id ?? 0) > 0
+		);
+		categories.splice(0, categories.length, ...filteredCategories);
+
 		initializeChart();
 	});
 

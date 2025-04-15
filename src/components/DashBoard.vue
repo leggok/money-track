@@ -25,13 +25,13 @@
 	import IncomeExpenseChart from "@/components/IncomeExpenseChart.vue";
 	import RecentTransactions from "@/components/RecentTransactions.vue";
 	import CategoryChart from "@/components/CategoryChart.vue";
-	import { TransactionsService } from "@/services/api";
+	import { TransactionsService, UsersService } from "@/services/api";
 	import type { Transaction } from "@/interfaces";
 	import { useUserStore } from "@/stores/user";
 
 	const userStore = useUserStore();
 
-	const totalBalance = ref(12500);
+	const totalBalance = ref(0);
 	const transactions = reactive(<Transaction[]>[]);
 
 	async function getTransactions() {
@@ -40,7 +40,13 @@
 		transactions.splice(0, transactions.length, ...data.transactions);
 	}
 
+	async function getUserBalance() {
+		const { data } = await UsersService.getBalance(userStore.user.id ?? 0);
+		totalBalance.value = data.balance;
+	}
+
 	onMounted(() => {
 		getTransactions();
+		getUserBalance();
 	});
 </script>
