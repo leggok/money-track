@@ -22,7 +22,7 @@
 
 		<div class="categories-grid">
 			<v-card
-				v-for="category in categories"
+				v-for="category in filteredCategories"
 				:key="category.id"
 				class="category-card rounded-lg"
 				:style="{ borderLeft: `4px solid ${category.color}` }"
@@ -45,7 +45,7 @@
 								{{ category.title }}
 							</h3>
 							<div class="text-caption text-medium-emphasis">
-								{{ getCategoryTotal(category.id ?? 0) }} ₴
+								{{ category.total }} ₴
 							</div>
 						</div>
 					</div>
@@ -61,16 +61,17 @@
 </template>
 
 <script setup lang="ts">
-	import { ref, reactive, onMounted, watch } from "vue";
+	import { ref, reactive, onMounted, watch, computed } from "vue";
 	import { Chart, registerables } from "chart.js";
 	import { CategoriesService } from "@/services/api";
 	import CreateCategory from "@/components/Dialogs/Category/CreateCategory.vue";
 	import type { Category, Transaction } from "@/interfaces";
 
-	const openCreateCategoryDialog = ref(false);
-	const categories = reactive<Category[]>([]);
-
 	Chart.register(...registerables);
+
+	const openCreateCategoryDialog = ref(false);
+	const allCategories = reactive<Category[]>([]);
+	const chartInstance = ref<Chart | null>(null);
 
 	function openPopup() {
 		openCreateCategoryDialog.value = true;
@@ -80,51 +81,63 @@
 		transactions: Transaction[];
 	}>();
 
-	function getCategoryTotal(categoryId: number): number {
-		if (categoryId) {
-			return props.transactions
-				.filter((t) => t.type === "expense" && t.category_id === categoryId)
-				.reduce((sum, t) => {
-					const rate = t.currency?.rate || 1;
-					return sum + t.value * rate;
-				}, 0);
-		} else {
-			return 0;
-		}
-	}
+	const categoriesWithTotals = computed(() => {
+		return allCategories.map((category) => {
+			const total = props.transactions
+				.filter((t) => t.type === "expense" && t.category_id === category.id)
+				.reduce((sum, t) => sum + t.value * (t.currency?.rate || 1), 0);
+
+			return { ...category, total };
+		});
+	});
+
+	const filteredCategories = computed(() =>
+		categoriesWithTotals.value.filter((c) => c.total > 0)
+	);
+
+	watch(
+		filteredCategories,
+		(newCategories) => {
+			updateChart(newCategories);
+		},
+		{ immediate: true }
+	);
+
+	watch(
+		() => props.transactions,
+		() => {
+			updateChart(filteredCategories.value);
+		},
+		{ deep: true }
+	);
 
 	onMounted(async () => {
 		const { data } = await CategoriesService.getAll();
-		const filteredCategories = data.categories.filter(
-			(category: Category) => getCategoryTotal(category.id ?? 0) > 0
-		);
-		categories.splice(0, categories.length, ...filteredCategories);
-
-		initializeChart();
+		allCategories.splice(0, allCategories.length, ...data.categories);
 	});
 
-	function initializeChart() {
+	function updateChart(categories: (Category & { total: number })[]) {
 		const ctx = document.getElementById("categoryChart") as HTMLCanvasElement;
 		if (!ctx) return;
 
-		const categoryTotals = categories.map((cat) => getCategoryTotal(cat.id ?? 0));
-		const total = categoryTotals.reduce((a, b) => a + b, 0);
+		const labels = categories.map((c) => c.title);
+		const data = categories.map((c) => c.total);
+		const backgroundColors = categories.map((c) => c.color);
+		const total = data.reduce((a, b) => a + b, 0);
 
-		// Destroy existing chart if it exists
-		const existingChart = Chart.getChart(ctx);
-		if (existingChart) {
-			existingChart.destroy();
+		if (chartInstance.value) {
+			chartInstance.value.destroy();
 		}
 
-		new Chart(ctx, {
+		chartInstance.value = new Chart(ctx, {
 			type: "doughnut",
 			data: {
-				labels: categories.map((category) => category.title),
+				labels,
 				datasets: [
 					{
 						label: "Expenses",
-						data: categoryTotals,
-						backgroundColor: categories.map((category) => category.color),
+						data,
+						backgroundColor: backgroundColors,
 						borderWidth: 0,
 						hoverOffset: 8
 					}
@@ -134,9 +147,7 @@
 				responsive: true,
 				maintainAspectRatio: false,
 				plugins: {
-					legend: {
-						display: false
-					},
+					legend: { display: false },
 					tooltip: {
 						callbacks: {
 							label: function (context) {
@@ -152,15 +163,6 @@
 			}
 		});
 	}
-
-	// Watch for changes in transactions to update the chart
-	watch(
-		() => props.transactions,
-		() => {
-			initializeChart();
-		},
-		{ deep: true }
-	);
 </script>
 
 <style scoped lang="scss">
