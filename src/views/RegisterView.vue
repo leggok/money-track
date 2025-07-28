@@ -68,6 +68,8 @@
 	import { showMessage } from "@/utils/message";
 	import axios from "axios";
 	import { testEmail } from "@/utils/validation";
+	import { useAuthStore } from "@/stores/auth";
+	import { useUserStore } from "@/stores/user";
 
 	const first_name = ref<string>("");
 	const last_name = ref<string>("");
@@ -79,6 +81,9 @@
 	const disableSubmit = ref<boolean>(false);
 	const router = useRouter();
 	const form = ref();
+
+	const authStore = useAuthStore();
+	const userStore = useUserStore();
 
 	const togglePasswordVisibility = (): void => {
 		showPassword.value = !showPassword.value;
@@ -95,6 +100,14 @@
 			};
 
 			const response = await AuthService.registration(authData);
+
+			// Save user and token if provided
+			if (response.data.user) {
+				userStore.setUser(response.data.user);
+			}
+			if (response.data.accessToken) {
+				authStore.setToken(response.data.accessToken);
+			}
 
 			if (response.data.success) {
 				showMessage("Registration successful!", "success");

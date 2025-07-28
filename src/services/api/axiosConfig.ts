@@ -1,11 +1,24 @@
 import axios from "axios";
-import type { AxiosResponse, AxiosRequestConfig } from "axios";
+import type { AxiosResponse, AxiosRequestConfig, AxiosRequestHeaders } from "axios";
 import { AxiosError } from "axios";
 
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
 
 const axiosApiInstance = axios.create();
+
+const token = localStorage.getItem("accessToken");
+if (token) {
+	axiosApiInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+}
+
+axiosApiInstance.interceptors.request.use((config) => {
+	const authToken = localStorage.getItem("accessToken");
+	if (authToken) {
+		(config.headers as AxiosRequestHeaders)["Authorization"] = `Bearer ${authToken}`;
+	}
+	return config;
+});
 
 // Оновлений тип для помилок
 interface ErrorResponse {

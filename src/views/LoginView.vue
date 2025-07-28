@@ -48,8 +48,10 @@
 	import { showMessage } from "@/utils/message";
 	import { testEmail } from "@/utils/validation";
 	import { useUserStore } from "@/stores/user";
+	import { useAuthStore } from "@/stores/auth";
 
 	const userStore = useUserStore();
+	const authStore = useAuthStore();
 
 	const email = ref<string>("");
 	const password = ref<string>("");
@@ -71,6 +73,10 @@
 			const response = await AuthService.login(authData);
 
 			userStore.setUser(response.data.user);
+			// Save access token
+			if (response.data.accessToken) {
+				authStore.setToken(response.data.accessToken);
+			}
 
 			if (response.data.success) {
 				showMessage("Login successful!", "success");
