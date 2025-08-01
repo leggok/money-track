@@ -8,6 +8,7 @@ interface UserState {
 interface UserActions {
 	setUser(user: User): void;
 	clearUser(): void;
+	setUserRole(role: string): void;
 }
 
 const emptyUser: User = {
@@ -33,6 +34,9 @@ export const useUserStore = defineStore<"user", UserState, Record<string, never>
 			},
 			clearUser() {
 				this.user = emptyUser;
+			},
+			setUserRole(role: string) {
+				this.role = role;
 			}
 		},
 

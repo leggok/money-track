@@ -1,65 +1,57 @@
-import axios from "axios";
-import type { AxiosResponse, AxiosRequestConfig, AxiosRequestHeaders } from "axios";
-import { AxiosError } from "axios";
+import axios, { type AxiosError, type AxiosRequestConfig, type AxiosResponse } from "axios";
+import { AuthService } from "@/services/api";
+import { useAuthStore } from "@/stores/auth";
 
-axios.defaults.withCredentials = true;
-axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
+const axiosApiInstance = axios.create({
+	withCredentials: true,
+	baseURL: import.meta.env.VITE_API_BASE_URL
+});
 
-const axiosApiInstance = axios.create();
-
-const token = localStorage.getItem("accessToken");
-if (token) {
-	axiosApiInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+/* ---------- helper ---------- */
+function setAuthHeader(token: string | null) {
+	if (token) axiosApiInstance.defaults.headers.common.Authorization = `Bearer ${token}`;
+	else delete axiosApiInstance.defaults.headers.common.Authorization;
 }
 
+/* ---------- request: підставляємо токен ---------- */
 axiosApiInstance.interceptors.request.use((config) => {
-	const authToken = localStorage.getItem("accessToken");
-	if (authToken) {
-		(config.headers as AxiosRequestHeaders)["Authorization"] = `Bearer ${authToken}`;
-	}
+	const { token } = useAuthStore(); // Pinia store (persisted)
+	setAuthHeader(token);
 	return config;
 });
 
-// Оновлений тип для помилок
-interface ErrorResponse {
-	response?: {
-		data?: {
-			message?: string;
-		};
-		message?: string;
-	};
-	message?: string;
-	config: AxiosRequestConfig;
-}
-
+/* ---------- response: обробка помилок ---------- */
 axiosApiInstance.interceptors.response.use(
-	(response: AxiosResponse) => {
-		return response;
-	},
-	async (error: AxiosError<ErrorResponse>) => {
-		const { response, config } = error;
+	(response: AxiosResponse) => response,
+	async (error: AxiosError<{ message: string }>) => {
+		// запит було скасовано користувачем/AbortController
+		if (error.name === "CanceledError") throw error;
 
-		if (response?.data?.message === "No access token") {
-			// Перевірка, чи є повідомлення про відсутність токена
-			const originalRequest = config;
-
+		if (error.response?.status === 401) {
+			/* ------ спроба поновити токен ------ */
 			try {
-				// Спробуємо отримати новий токен
-				await axios.get("/auth/refresh-token");
-				// Після успішного оновлення токена, повторюємо запит
-				if (originalRequest) {
-					return axios(originalRequest);
+				// Спроба тихо оновити токен
+				await AuthService.refreshToken();
+				// Після успішного оновлення токена повторюємо оригінальний запит
+				const originalRequest = error.config as AxiosRequestConfig;
+				return axios(originalRequest);
+			} catch (refreshErr: unknown) {
+				// якщо back-end повернув, що користувача видалено
+				if (
+					(refreshErr as AxiosError<{ message: string }>).response?.status === 404 &&
+					(refreshErr as AxiosError<{ message: string }>).response?.data?.message ===
+						"User is terminated"
+				) {
+					alert("User is terminated");
 				}
-				return Promise.reject(new Error("Original request is undefined"));
-			} catch (err) {
-				// Якщо не вдалося оновити токен, перенаправляємо на сторінку логіну
-				console.error("Failed to refresh token, redirecting to login.");
-				window.location.href = "/login/";
-				return Promise.reject(err);
+
+				// у всіх інших випадках перекидаємо на /login
+				const path = window.location.pathname;
+				if (!path.includes("login")) window.location.href = "/login/";
+				return Promise.reject(refreshErr);
 			}
 		}
 
-		// У випадку інших помилок
 		return Promise.reject(error);
 	}
 );
