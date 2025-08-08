@@ -9,4 +9,12 @@ export default class AuthService {
 	static login(auth: Login) {
 		return axiosApiInstance.post("/auth/login", auth);
 	}
+
+	static checkRole() {
+		return axiosApiInstance.get("/auth/check-role");
+	}
+
+	static refreshToken() {
+		return axiosApiInstance.get("/auth/refresh-token");
+	}
 }

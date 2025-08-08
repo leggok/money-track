@@ -80,6 +80,7 @@
 
 			if (response.data.success) {
 				showMessage("Login successful!", "success");
+				router.push({ name: "Dashboard" });
 			} else {
 				showMessage(response.data.message, "error");
 			}
