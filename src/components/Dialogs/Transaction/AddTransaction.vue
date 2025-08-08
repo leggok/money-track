@@ -209,6 +209,8 @@
 			text: category.title,
 			value: category.id
 		}));
+
+		transaction.category_id = Number(data.categories[0].id);
 	}
 
 	async function fetchCurrencies() {
