@@ -17,4 +17,8 @@ export default class AuthService {
 	static refreshToken() {
 		return axiosApiInstance.get("/auth/refresh-token");
 	}
+
+	static logout() {
+		return axiosApiInstance.get("/auth/logout");
+	}
 }

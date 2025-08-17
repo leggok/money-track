@@ -126,7 +126,7 @@
 	import { useUserStore } from "@/stores/user";
 	import { useAuthStore } from "@/stores/auth";
 	import CurrenciesService from "@/services/api/currency";
-	import { UsersService } from "@/services/api";
+	import { UsersService, AuthService } from "@/services/api";
 	import type { Currency } from "@/interfaces";
 
 	const router = useRouter();
@@ -215,7 +215,9 @@
 	}
 
 	async function logout() {
-		await authStore.logout();
+		await AuthService.logout();
+		authStore.clearToken();
+		userStore.clearUser();
 		router.push({ name: "Login" });
 	}
 
