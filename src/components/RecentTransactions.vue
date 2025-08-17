@@ -94,12 +94,17 @@
 		background: #fff;
 	}
 
+	.transactions-list {
+		max-height: 328px;
+		overflow-y: auto;
+	}
+
 	.transaction-item {
 		background: rgba(var(--v-theme-surface-variant), 0.5);
 		transition: transform 0.2s ease-in-out;
 
 		&:hover {
-			transform: translateX(4px);
+			background: rgba(var(--v-theme-surface-variant), 0.5);
 		}
 
 		&.income {

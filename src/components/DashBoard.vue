@@ -31,6 +31,7 @@
 	async function getTransactions() {
 		const { data } = await TransactionsService.getAll(userStore.user.id ?? 0);
 		transactions.splice(0, transactions.length, ...data.transactions);
+		transactions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 	}
 
 	onMounted(() => {

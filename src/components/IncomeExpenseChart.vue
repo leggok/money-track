@@ -99,13 +99,13 @@
 				<v-row>
 					<v-col cols="6">
 						<div class="text-center">
-							<div class="text-h6 text-success">₴{{ chartData.labels[0] === "Доходи" ? chartData.datasets[0].data[0].toLocaleString() : chartData.datasets[0].data[1].toLocaleString() }}</div>
+							<div class="text-h6 text-success">₴{{ chartData.datasets[0].data[0] }}</div>
 							<div class="text-caption text-medium-emphasis">Total Income</div>
 						</div>
 					</v-col>
 					<v-col cols="6">
 						<div class="text-center">
-							<div class="text-h6 text-error">₴{{ chartData.labels[0] === "Витрати" ? chartData.datasets[0].data[0].toLocaleString() : chartData.datasets[0].data[1].toLocaleString() }}</div>
+							<div class="text-h6 text-error">₴{{ chartData.datasets[0].data[1] }}</div>
 							<div class="text-caption text-medium-emphasis">Total Expense</div>
 						</div>
 					</v-col>
