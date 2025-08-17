@@ -4,6 +4,7 @@ export interface Currency {
 	code: string;
 	symbol: string;
 	country: string;
-	exchange_rate: number;
+	currency_value: number;
+	currency_date: Date;
 	is_main: boolean;
 }

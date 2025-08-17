@@ -6,7 +6,7 @@ export default class CurrenciesService {
 		return axiosApiInstance.post("/currencies", currency);
 	}
 
-	static getAll() {
-		return axiosApiInstance.get("/currencies");
+	static getAll(update = false) {
+		return axiosApiInstance.get("/currencies", { params: { update } });
 	}
 }
