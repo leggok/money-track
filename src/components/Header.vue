@@ -135,13 +135,17 @@
 
 	const balance = ref(0);
 	const currencies = ref<Currency[]>([]);
-	const selectedCurrency = ref<string>("USD");
+	const selectedCurrency = ref<string>("");
 	const isRefreshing = ref(false);
 	const isRefreshingBalance = ref(false);
 
+	const user_id = userStore.user.id ?? 0;
+	
+	const user_main_currency_id = userStore.user.main_currency_id ?? 0;
+
 	async function getBalance() {
 		try {
-			const { data } = await UsersService.getBalance(userStore.user.id ?? 0);
+			const { data } = await UsersService.getBalance(user_id);
 			balance.value = data.balance;
 		} catch (error) {
 			console.error("Error fetching balance:", error);
@@ -152,8 +156,22 @@
 		try {
 			const { data } = await CurrenciesService.getAll(update);
 			currencies.value = data.currencies || [];
-			if (currencies.value.length > 0 && !selectedCurrency.value) {
-				selectedCurrency.value = currencies.value[0].code;
+			
+			if (currencies.value.length > 0) {
+				if (user_main_currency_id > 0) {
+					// Find currency by user's main currency ID
+					const userCurrency = currencies.value.find(currency => currency.id === user_main_currency_id);
+
+					if (userCurrency) {
+						selectedCurrency.value = userCurrency.code;
+					} else {
+						// Fallback to first currency if user's currency not found
+						selectedCurrency.value = currencies.value[0].code;
+					}
+				} else {
+					// If user has no main currency set, use first available
+					selectedCurrency.value = currencies.value[0].code;
+				}
 			}
 		} catch (error) {
 			console.error("Error fetching currencies:", error);
@@ -178,9 +196,22 @@
 		}
 	}
 
-	function onCurrencyChange() {
-		// Here you can add logic to handle currency change
-		console.log("Selected currency:", selectedCurrency.value);
+	async function onCurrencyChange() {
+		try {
+			const newSelectedCurrency = currencies.value.find((currency) => currency.code === selectedCurrency.value);
+			const userCurrencyId = newSelectedCurrency?.id;
+			
+			if (user_id && userCurrencyId) {
+				await CurrenciesService.updateMainCurrencyForUser(user_id, userCurrencyId);
+				
+				// Update user store with new main currency ID
+				userStore.user.main_currency_id = userCurrencyId;
+			}
+		} catch (error) {
+			console.error("Error updating main currency:", error);
+			// Optionally revert the selection if the API call fails
+			// You might want to show a user-friendly error message here
+		}
 	}
 
 	async function logout() {

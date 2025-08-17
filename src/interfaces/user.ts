@@ -6,4 +6,5 @@ export interface User {
 	email: string;
 	avatar: string;
 	total_budget: number;
+	main_currency_id: number | null;
 }

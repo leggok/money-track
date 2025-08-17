@@ -17,7 +17,8 @@ const emptyUser: User = {
 	username: "",
 	email: "",
 	avatar: "",
-	total_budget: 0
+	total_budget: 0,
+	main_currency_id: 0
 };
 
 export const useUserStore = defineStore<"user", UserState, Record<string, never>, UserActions>(
