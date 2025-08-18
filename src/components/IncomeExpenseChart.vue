@@ -1,10 +1,23 @@
 <script setup lang="ts">
 	import { computed, onMounted, watch, nextTick } from "vue";
 	import { Chart, registerables } from "chart.js";
-	import type { Transaction } from "@/interfaces";
+	import { useUserStore } from "@/stores/user";
+	import type { Transaction, Currency } from "@/interfaces";
+	import convertCurrencyValue from "@/utils/convertCurrencyValue";
 	Chart.register(...registerables);
 
-	const props = defineProps<{ transactions: Transaction[] }>();
+	const props = defineProps<{ 
+		transactions: Transaction[];
+		currencies: Currency[];
+	}>();
+
+	const userStore = useUserStore();
+
+	// Get user's main currency
+	const userMainCurrency = computed(() => {
+		const mainCurrencyId = userStore.user.main_currency_id;
+		return props.currencies.find(currency => currency.id === mainCurrencyId);
+	});
 
 	let chart: Chart | null = null;
 
@@ -12,10 +25,10 @@
 		console.log('props.transactions',props.transactions)
 		const income = props.transactions
 			.filter((t) => t.type === "income")
-			.reduce((sum, t) => sum + Number(t.value)	, 0);
+			.reduce((sum, t) => sum + convertCurrencyValue(t, userMainCurrency.value || null, props.currencies).value, 0);
 		const expense = props.transactions
 			.filter((t) => t.type === "expense")
-			.reduce((sum, t) => sum + Number(t.value), 0);
+			.reduce((sum, t) => sum + convertCurrencyValue(t, userMainCurrency.value || null, props.currencies).value, 0);
 		
 		return {
 			labels: ["Income", "Expense"],
@@ -47,7 +60,8 @@
 					label: function(context: any) {
 						const label = context.label || '';
 						const value = context.parsed || 0;
-						return `${label}: ₴${value.toLocaleString()}`;
+						const symbol = userMainCurrency.value?.symbol || '₴';
+						return `${label}: ${symbol}${value.toLocaleString()}`;
 					}
 				}
 			}
@@ -99,13 +113,13 @@
 				<v-row>
 					<v-col cols="6">
 						<div class="text-center">
-							<div class="text-h6 text-success">₴{{ chartData.datasets[0].data[0] }}</div>
+							<div class="text-h6 text-success">{{ userMainCurrency?.symbol || '₴' }}{{ chartData.datasets[0].data[0].toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</div>
 							<div class="text-caption text-medium-emphasis">Total Income</div>
 						</div>
 					</v-col>
 					<v-col cols="6">
 						<div class="text-center">
-							<div class="text-h6 text-error">₴{{ chartData.datasets[0].data[1] }}</div>
+							<div class="text-h6 text-error">{{ userMainCurrency?.symbol || '₴' }}{{ chartData.datasets[0].data[1].toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</div>
 							<div class="text-caption text-medium-emphasis">Total Expense</div>
 						</div>
 					</v-col>

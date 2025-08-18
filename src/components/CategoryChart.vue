@@ -45,7 +45,7 @@
 								{{ category.title }}
 							</h3>
 							<div class="text-caption text-medium-emphasis">
-								{{ category.total }} ₴
+								{{ userMainCurrency?.symbol || '₴' }}{{ category.total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
 							</div>
 						</div>
 					</div>
@@ -65,7 +65,9 @@
 	import { Chart, registerables } from "chart.js";
 	import { CategoriesService } from "@/services/api";
 	import CreateCategory from "@/components/Dialogs/Category/CreateCategory.vue";
-	import type { Category, Transaction } from "@/interfaces";
+	import { useUserStore } from "@/stores/user";
+	import type { Category, Transaction, Currency } from "@/interfaces";
+	import convertCurrencyValue from "@/utils/convertCurrencyValue";
 
 	Chart.register(...registerables);
 
@@ -79,13 +81,22 @@
 
 	const props = defineProps<{
 		transactions: Transaction[];
+		currencies: Currency[];
 	}>();
+
+	const userStore = useUserStore();
+
+	// Get user's main currency
+	const userMainCurrency = computed(() => {
+		const mainCurrencyId = userStore.user.main_currency_id;
+		return props.currencies.find(currency => currency.id === mainCurrencyId);
+	});
 
 	const categoriesWithTotals = computed(() => {
 		return allCategories.map((category) => {
 			const total = props.transactions
 				.filter((t) => t.type === "expense" && t.category_id === category.id)
-				.reduce((sum, t) => sum + t.value * (t.currency?.rate || 1), 0);
+				.reduce((sum, t) => sum + convertCurrencyValue(t, userMainCurrency.value || null, props.currencies).value, 0);
 
 			return { ...category, total };
 		});
@@ -154,7 +165,8 @@
 								const value = context.raw as number;
 								const percentage =
 									total > 0 ? ((value / total) * 100).toFixed(1) : "0";
-								return `${context.label}: ${value} ₴ (${percentage}%)`;
+								const symbol = userMainCurrency.value?.symbol || '₴';
+								return `${context.label}: ${symbol}${value.toLocaleString()} (${percentage}%)`;
 							}
 						}
 					}

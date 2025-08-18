@@ -38,7 +38,7 @@
 				<v-list-item-subtitle class="text-caption">
 					<div class="d-flex align-center">
 						<span class="amount mr-2">
-							{{ tx.type === "income" ? "+" : "-" }}₴{{ tx.value.toLocaleString() }}
+							{{ tx.type === "income" ? "+" : "-" }} {{ convertCurrencyValue(tx, userMainCurrency || null, props.currencies).symbol }} {{ convertCurrencyValue(tx, userMainCurrency || null, props.currencies).value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}
 						</span>
 						<v-chip
 							size="x-small"
@@ -64,15 +64,25 @@
 </template>
 
 <script setup lang="ts">
-	import { ref } from "vue";
+	import { ref, computed } from "vue";
 	import AddTransaction from "@/components/Dialogs/Transaction/AddTransaction.vue";
-	import type { Transaction } from "@/interfaces";
+	import { useUserStore } from "@/stores/user";
+	import type { Transaction, Currency } from "@/interfaces";
+	import convertCurrencyValue from "@/utils/convertCurrencyValue";
 
-	defineProps<{
+	const props = defineProps<{
 		transactions: Transaction[];
+		currencies: Currency[];
 	}>();
 
+	const userStore = useUserStore();
 	const openAddTransactionDialog = ref(false);
+
+	// Get user's main currency
+	const userMainCurrency = computed(() => {
+		const mainCurrencyId = userStore.user.main_currency_id;
+		return props.currencies.find(currency => currency.id === mainCurrencyId);
+	});
 
 	function openPopup() {
 		openAddTransactionDialog.value = true;
@@ -87,6 +97,7 @@
 			minute: "2-digit"
 		});
 	}
+
 </script>
 
 <style scoped lang="scss">
