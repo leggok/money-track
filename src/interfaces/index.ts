@@ -4,5 +4,6 @@ import type { UploadFile } from "@/interfaces/uploadFile";
 import type { Transaction } from "@/interfaces/transaction";
 import type { Currency } from "@/interfaces/currency";
 import type { User } from "@/interfaces/user";
+import type { Debt } from "@/interfaces/debt";
 
-export type { Registration, Login, Category, UploadFile, Transaction, Currency, User };
+export type { Registration, Login, Category, UploadFile, Transaction, Currency, User, Debt };
