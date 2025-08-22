@@ -2,6 +2,13 @@
 	<v-card class="recent-debts pa-6 rounded-lg" elevation="2">
 		<div class="d-flex justify-space-between align-center mb-4">
 			<v-card-title class="text-h6 font-weight-bold pa-0">{{ title }}</v-card-title>
+			<v-btn
+				icon="mdi-plus"
+				variant="tonal"
+				color="primary"
+				size="small"
+				@click="openAddDebt"
+			/>
 		</div>
 
 		<v-list class="debts-list" lines="two">
@@ -25,6 +32,7 @@
 				</template>
 
 				<v-list-item-title class="text-body-1 font-weight-medium">
+					{{ debt.lender_name || "Unknown" }} -
 					{{ debt.description || "No description" }}
 				</v-list-item-title>
 				<v-list-item-subtitle class="text-caption">
@@ -65,16 +73,30 @@
 			</v-list-item>
 		</v-list>
 	</v-card>
+	<AddDebt
+		:show="openDialog"
+		:currencies="currencies"
+		@close="openDialog = false"
+		@saved="emit('saved')"
+	/>
 </template>
 
 <script setup lang="ts">
-	import { computed as vueComputed } from "vue";
+	import { computed as vueComputed, ref } from "vue";
 	import { useUserStore } from "@/stores/user";
 	import type { Debt, Currency } from "@/interfaces";
 	import convertCurrencyValue from "@/utils/convertCurrencyValue";
+	import AddDebt from "@/components/Dialogs/Debt/AddDebt.vue";
 
 	const props = defineProps<{ debts: Debt[]; currencies: Currency[]; cardTitle?: string }>();
-	console.log("props", props);
+
+	const emit = defineEmits<{ (e: "saved"): void }>();
+
+	const openDialog = ref(false);
+
+	function openAddDebt() {
+		openDialog.value = true;
+	}
 
 	const userStore = useUserStore();
 

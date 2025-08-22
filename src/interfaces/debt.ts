@@ -7,10 +7,11 @@ export interface Debt {
 	currency_id: number;
 	category_id: number;
 	currency?: Currency;
-	lender_id: number;
-	borrower_id: number;
+	lender_id?: number;
+	borrower_id?: number;
 	status: string; // e.g., "pending", "paid", etc.
 	timestamp: string; // ISO date string when debt created
 	due_at?: string; // optional due date
 	paid_at?: string; // optional paid date
+	lender_name?: string; // name of person owed/lender
 }
